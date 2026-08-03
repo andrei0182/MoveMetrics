@@ -48,16 +48,22 @@ def run_dashboard():
     gcol1, gcol2 = st.columns(2)
 
     with gcol1:
-        st.caption("Leads vs Converted per sursa")
-        st.bar_chart(
-            by_source.set_index("Sursa")[["Leads", "Converted"]]
-        )
-
-    with gcol2:
-        st.caption("Conversion Rate per sursa")
+        st.caption("Conversion Rate per provider (%)")
         st.bar_chart(
             by_source.set_index("Sursa")["Conversion_Rate_%"]
         )
+
+    with gcol2:
+        st.caption("Cost per Conversie per provider ($)")
+        cost_per_conversion = by_source[
+            by_source["Cost_Per_Conversion"].notna()
+        ]
+        if len(cost_per_conversion) > 0:
+            st.bar_chart(
+                cost_per_conversion.set_index("Sursa")["Cost_Per_Conversion"]
+            )
+        else:
+            st.info("Nicio sursa nu are conversii inca.")
 
     st.divider()
 
@@ -109,6 +115,10 @@ def run_dashboard():
         lead_funnel["by_source"],
         use_container_width=True,
         column_config={
+            "Cost": st.column_config.NumberColumn("Lead Cost", format="$%.2f"),
+            "Cost_Per_Conversion": st.column_config.NumberColumn(
+                "Cost per Conversie", format="$%.2f"
+            ),
             "Conversion_Rate_%": st.column_config.NumberColumn(
                 "Conversion Rate", format="%.2f%%"
             ),
