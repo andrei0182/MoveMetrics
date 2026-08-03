@@ -5,78 +5,55 @@ from io import StringIO
 
 def load_google_sheet(sheet_id, sheet_name=None, gid=None):
     """
-    Load Google Sheet tab as pandas DataFrame.
+    Citeste un tab dintr-un Google Sheet ca DataFrame, direct prin export CSV.
 
-    Priority:
-    1. Sheet name (stable)
-    2. gid
-    3. first sheet
+    Foloseste endpoint-ul gviz (query by sheet name) daca sheet_name e dat -
+    e mai robust decat gid, pentru ca gid-urile se pot schimba daca cineva
+    reordoneaza tab-urile, dar numele tab-ului ("CHARGED") ramane stabil.
+
+    Necesita ca sheet-ul sa fie partajat "Anyone with the link - Viewer",
+    altfel cererea esueaza cu 401 (sheet-ul e privat).
+
+    NOTA: nu foloseste requests.Session cu trust_env=False (incercare
+    anterioara de a ocoli proxy-ul corporate) - pe o retea care obliga
+    tot traficul prin proxy, ocolirea proxy-ului duce direct la eroare
+    de DNS, nu rezolva nimic. Local, sursa de date ramane fisierul Excel
+    (vezi config/settings.py); Google Sheets functioneaza doar din medii
+    fara proxy restrictiv (ex. Streamlit Cloud).
     """
-
 
     if sheet_name:
         url = (
             f"https://docs.google.com/spreadsheets/d/"
-            f"{sheet_id}/gviz/tq?"
-            f"tqx=out:csv&sheet={sheet_name}"
+            f"{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
         )
-
     elif gid:
-
         url = (
             f"https://docs.google.com/spreadsheets/d/"
-            f"{sheet_id}/export?"
-            f"format=csv&gid={gid}"
+            f"{sheet_id}/export?format=csv&gid={gid}"
         )
-
     else:
-
         url = (
             f"https://docs.google.com/spreadsheets/d/"
-            f"{sheet_id}/export?"
-            f"format=csv"
+            f"{sheet_id}/export?format=csv"
         )
 
-
-    print("Loading Google Sheet:")
-    print(url)
-
-
-    session = requests.Session()
-
-    # IMPORTANT:
-    # evita proxy-ul Bosch care dă 407
-    session.trust_env = False
-
-
-    response = session.get(
+    response = requests.get(
         url,
         timeout=30
     )
 
-
     if response.status_code in (401, 403):
-
         raise PermissionError(
-            """
-Google Sheet access denied.
-
-Check:
-Share -> General access ->
-Anyone with the link -> Viewer
-"""
+            "Nu am acces la Google Sheet-ul cerut. Verifica ca e partajat "
+            "'Anyone with the link - Viewer' (buton Share, colt dreapta-sus)."
         )
 
-
     response.raise_for_status()
-
 
     df = pd.read_csv(
         StringIO(response.text)
     )
-
-
-    # curățare coloane
 
     df.columns = (
         df.columns
@@ -84,18 +61,7 @@ Anyone with the link -> Viewer
         .str.strip()
     )
 
-
-    # curățare text
-
-    for col in df.select_dtypes(
-        include="object"
-    ).columns:
-
-        df[col] = (
-            df[col]
-            .astype(str)
-            .str.strip()
-        )
-
+    for col in df.select_dtypes(include="object").columns:
+        df[col] = df[col].astype(str).str.strip()
 
     return df
