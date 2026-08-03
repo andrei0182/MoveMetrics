@@ -63,4 +63,12 @@ def run_dashboard():
     st.bar_chart(provider_df.set_index("Sursa")["Revenue"])
 
     st.subheader("Provider Performance")
-    st.dataframe(provider_df, use_container_width=True)
+    st.dataframe(
+        provider_df,
+        use_container_width=True,
+        column_config={
+            "Revenue": st.column_config.NumberColumn("Revenue", format="$%.2f"),
+            "Average_Job": st.column_config.NumberColumn("Average Job", format="$%.2f"),
+            "Revenue_%": st.column_config.NumberColumn("Revenue %", format="%.2f%%"),
+        },
+    )
