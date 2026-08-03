@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from src.excel.excel_loader import _resolve_sheet_name
+from src.loaders.excel_loader import _resolve_sheet_name
 
 
 def test_sheet_name_trailing_space_is_tolerated(tmp_path):

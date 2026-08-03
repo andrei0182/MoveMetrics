@@ -1,13 +1,14 @@
 import streamlit as st
 
-from config.settings import REPORT_FILE, CHARGED_SHEET
-from src.analysis.provider_analysis import analyze_providers
-from src.excel.excel_loader import load_excel
-from src.models.kpi import calculate_kpis
-from src.processing.build_clean_jobs import build_clean_jobs_from_df
+from src.pipeline import run_pipeline
 
 
 def run_dashboard():
+    """
+    Doar afisare. Toata logica (loaders, cleaning, rules, analysis, KPIs)
+    traieste in src/pipeline.py - acest modul nu stie si nu-i pasa de unde
+    vin datele sau cum sunt calculate.
+    """
 
     st.set_page_config(
         page_title="PFM Analytics Suite",
@@ -17,13 +18,17 @@ def run_dashboard():
     st.title("PFM Analytics Suite")
     st.subheader("Financial & Operational Dashboard")
 
-    # Load & deduplicate: un singur rand per Job #, cu Charged/Cost
-    # insumate corect pe toata istoria jobului (vezi build_clean_jobs).
-    raw_df = load_excel(REPORT_FILE, CHARGED_SHEET)
-    jobs_df = build_clean_jobs_from_df(raw_df)
+    try:
+        result = run_pipeline()
+    except PermissionError as e:
+        st.error(str(e))
+        return
 
-    provider_df = analyze_providers(jobs_df)
-    kpis = calculate_kpis(jobs_df)
+    st.caption(f"Sursa de date: {result['source']}")
+
+    kpis = result["kpis"]
+    provider_df = result["provider_df"]
+    jobs_df = result["jobs_df"]
 
     col1, col2, col3 = st.columns(3)
 

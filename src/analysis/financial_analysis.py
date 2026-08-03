@@ -1,17 +1,14 @@
-from src.processing.build_clean_jobs import build_clean_jobs_from_df
-
-
-def calculate_financials(df):
+def calculate_financials(jobs_df):
     """
-    KPI financiare pe baza jobului deduplicat (un rand per Job #).
-    Foloseste acelasi pipeline ca build_clean_jobs, ca sa nu mai
-    diverga doua implementari ale aceleiasi logici de deduplicare.
+    KPI financiare (Revenue/Cost/Profit/Margin) pe baza jobului deja
+    curat si deja trecut prin regulile de business (jobs_df vine din
+    pipeline.py, nu direct din Excel/Sheets).
+
+    Acest modul NU citeste Excel si NU curata date - doar agrega.
     """
 
-    final = build_clean_jobs_from_df(df)
-
-    revenue = final["Charged"].sum()
-    cost = final["Cost"].sum()
+    revenue = jobs_df["Charged"].sum()
+    cost = jobs_df["Cost"].sum()
     profit = revenue - cost
 
     margin = 0.0
@@ -23,5 +20,5 @@ def calculate_financials(df):
         "Cost": round(cost, 2),
         "Profit": round(profit, 2),
         "Margin %": round(margin, 2),
-        "Jobs": final["Job #"].nunique(),
+        "Jobs": jobs_df["Job #"].nunique(),
     }

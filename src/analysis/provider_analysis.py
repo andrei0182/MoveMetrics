@@ -1,17 +1,15 @@
-from src.rules.data_quality import clean_provider_names
 from src.utils.money import clean_money_series
 
 
 def analyze_providers(jobs_df):
     """
-    Revenue pe sursa/provider, calculat pe date la nivel de JOB
-    (vezi build_clean_jobs_from_df) - altfel un job cu 2 randuri
-    (ex. plata initiala + plata_job_vechi) ar fi numarat de 2 ori
-    la 'Jobs', desi e un singur job.
+    Revenue pe sursa/provider. Presupune jobs_df deja curat si deja
+    trecut prin regulile de business (src/rules/data_quality.py aplicat
+    in pipeline.py) - acest modul NU mai apeleaza clean_provider_names
+    intern, ca sa nu existe doua locuri care aplica aceeasi regula.
     """
 
     data = jobs_df.copy()
-    data = clean_provider_names(data)
 
     data["Charged"] = clean_money_series(data["Charged"])
 
