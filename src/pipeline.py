@@ -37,27 +37,17 @@ from src.processing.build_clean_jobs import build_clean_jobs_from_df
 from src.rules.data_quality import clean_provider_names
 from src.analysis.financial_analysis import calculate_financials
 from src.analysis.provider_analysis import analyze_providers
+from src.analysis.lead_analysis import analyze_leads
 from src.models.kpi import calculate_kpis
 
 
 def load_raw_data():
+    """Stagiul LOADERS: Google Sheets daca e configurat, altfel fisier local."""
 
-    try:
-        if GOOGLE_SHEET_ID:
-            return load_google_sheet(
-                GOOGLE_SHEET_ID,
-                sheet_name=GOOGLE_SHEET_TAB
-            )
+    if GOOGLE_SHEET_ID:
+        return load_google_sheet(GOOGLE_SHEET_ID, sheet_name=GOOGLE_SHEET_TAB)
 
-    except Exception as e:
-        print("Google Sheet failed:", e)
-        print("Using local Excel file")
-
-
-    return load_excel(
-        REPORT_FILE,
-        CHARGED_SHEET
-    )
+    return load_excel(REPORT_FILE, CHARGED_SHEET)
 
 
 def run_pipeline():
@@ -75,15 +65,17 @@ def run_pipeline():
     # analizele de mai jos primesc deja date curate, nu mai aplica reguli.
     jobs_df = clean_provider_names(jobs_df)
 
-    # Stagiul FINANCIAL ANALYSIS + KPIs + provider breakdown.
+    # Stagiul FINANCIAL ANALYSIS + KPIs + provider breakdown + lead funnel.
     financials = calculate_financials(jobs_df)
     kpis = calculate_kpis(jobs_df)
     provider_df = analyze_providers(jobs_df)
+    lead_funnel = analyze_leads(jobs_df)
 
     return {
         "jobs_df": jobs_df,
         "financials": financials,
         "kpis": kpis,
         "provider_df": provider_df,
+        "lead_funnel": lead_funnel,
         "source": "Google Sheets" if GOOGLE_SHEET_ID else "fisier local",
     }

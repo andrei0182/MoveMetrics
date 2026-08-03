@@ -28,7 +28,24 @@ def run_dashboard():
 
     kpis = result["kpis"]
     provider_df = result["provider_df"]
-    jobs_df = result["jobs_df"]
+    lead_funnel = result["lead_funnel"]
+
+    st.subheader("Lead Pipeline")
+
+    lcol1, lcol2, lcol3 = st.columns(3)
+
+    with lcol1:
+        st.metric("Total Leads", lead_funnel["Total Leads"])
+
+    with lcol2:
+        st.metric("Converted Jobs", lead_funnel["Converted"])
+
+    with lcol3:
+        st.metric("Conversion Rate", f"{lead_funnel['Conversion Rate %']:.2f}%")
+
+    st.divider()
+
+    st.subheader("Financial")
 
     col1, col2, col3 = st.columns(3)
 
@@ -54,11 +71,6 @@ def run_dashboard():
 
     st.divider()
 
-    #st.subheader("Joburi (deduplicate)")
-    #st.dataframe(jobs_df, use_container_width=True)
-
-
-
     st.subheader("Revenue by Provider")
     st.bar_chart(provider_df.set_index("Sursa")["Revenue"])
 
@@ -73,5 +85,16 @@ def run_dashboard():
             "Average_Job": st.column_config.NumberColumn("Average Job", format="$%.2f"),
             "Margin_%": st.column_config.NumberColumn("Margin %", format="%.2f%%"),
             "Revenue_%": st.column_config.NumberColumn("Revenue %", format="%.2f%%"),
+        },
+    )
+
+    st.subheader("Conversion by Source")
+    st.dataframe(
+        lead_funnel["by_source"],
+        use_container_width=True,
+        column_config={
+            "Conversion_Rate_%": st.column_config.NumberColumn(
+                "Conversion Rate", format="%.2f%%"
+            ),
         },
     )
