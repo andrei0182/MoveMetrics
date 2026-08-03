@@ -90,5 +90,6 @@ def run_pipeline():
         "kpis": kpis,
         "provider_df": provider_df,
         "lead_funnel": lead_funnel,
+        "profit_order": profit_order,
         "source": "Google Sheets" if GOOGLE_SHEET_ID else "fisier local",
     }
