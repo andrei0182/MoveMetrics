@@ -25,6 +25,8 @@ Regula: dashboard.py (ui/) NU apeleaza direct loaders/processing/analysis.
 Apeleaza doar functia run_pipeline() de aici si afiseaza rezultatul.
 """
 
+import pandas as pd
+
 from config.settings import (
     REPORT_FILE,
     CHARGED_SHEET,
@@ -70,6 +72,17 @@ def run_pipeline():
     kpis = calculate_kpis(jobs_df)
     provider_df = analyze_providers(jobs_df)
     lead_funnel = analyze_leads(jobs_df)
+
+    # Sincronizare vizuala: aceeasi ordine de profitabilitate (din
+    # provider_df, deja sortat dupa Profit descrescator) se aplica si
+    # peste tabelul by_source al lead_funnel, ca toate graficele/tabelele
+    # din dashboard sa arate sursele in aceeasi ordine, nu fiecare in alta.
+    profit_order = provider_df["Sursa"].tolist()
+    by_source = lead_funnel["by_source"].copy()
+    by_source["Sursa"] = pd.Categorical(
+        by_source["Sursa"], categories=profit_order, ordered=True
+    )
+    lead_funnel["by_source"] = by_source.sort_values("Sursa").reset_index(drop=True)
 
     return {
         "jobs_df": jobs_df,

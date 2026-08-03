@@ -43,6 +43,38 @@ def test_pipeline_runs_all_stages_in_order(mock_load_excel):
     assert set(result["provider_df"]["Sursa"]) == {"angieslist", "website"}
     assert result["source"] == "fisier local"
 
+    # Stagiul lead funnel: ambele joburi sunt "leaduri", ambele au Charged>0.
+    assert result["lead_funnel"]["Total Leads"] == 2
+    assert result["lead_funnel"]["Converted"] == 2
+    assert result["lead_funnel"]["Conversion Rate %"] == 100.0
+
+
+@patch("src.pipeline.GOOGLE_SHEET_ID", None)
+@patch("src.pipeline.load_excel")
+def test_lead_funnel_by_source_matches_provider_profit_order(mock_load_excel):
+    # 4 surse, profitabilitate foarte diferita - trebuie ca ambele tabele
+    # sa arate sursele in ACEEASI ordine (Profit descrescator), nu fiecare
+    # in ordinea ei implicita (alfabetica pentru by_source, altfel pt provider).
+    mock_load_excel.return_value = pd.DataFrame({
+        "Job #": ["A", "B", "C", "D"],
+        "Nume Client": ["x", "y", "z", "w"],
+        "Sursa": ["angieslist", "allpoint_media", "manual", "website"],
+        "Data": ["2026-07-01"] * 4,
+        "Status": ["booked"] * 4,
+        "Charged": [500, 100, 600, 200],
+        "Deposit": [0, 0, 0, 0],
+        "Cost": [50, 300, 10, 0],
+    })
+
+    result = run_pipeline()
+
+    provider_order = result["provider_df"]["Sursa"].tolist()
+    by_source_order = result["lead_funnel"]["by_source"]["Sursa"].tolist()
+
+    assert provider_order == by_source_order
+    assert provider_order[0] == "manual"       # profit 590, cel mai mare
+    assert provider_order[-1] == "allpoint_media"  # profit -200, pierdere
+
 
 @patch("src.pipeline.GOOGLE_SHEET_ID", "fake_sheet_id")
 @patch("src.pipeline.GOOGLE_SHEET_TAB", "CHARGED")
