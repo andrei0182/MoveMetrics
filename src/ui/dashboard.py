@@ -93,8 +93,9 @@ def run_dashboard():
 
     st.divider()
 
-    st.subheader("Revenue by Provider")
-    st.bar_chart(provider_df.set_index("Sursa")["Revenue"])
+    st.subheader("Profit by Provider")
+    st.caption("Sortat de la cel mai profitabil la cel care aduce pierdere")
+    st.bar_chart(provider_df.set_index("Sursa")["Profit"])
 
     st.subheader("Provider Performance")
     st.dataframe(

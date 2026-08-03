@@ -46,6 +46,6 @@ def analyze_providers(jobs_df):
     if total_revenue > 0:
         provider["Revenue_%"] = provider["Revenue"] / total_revenue * 100
 
-    provider = provider.sort_values(by="Revenue", ascending=False)
+    provider = provider.sort_values(by="Profit", ascending=False)
 
     return provider
