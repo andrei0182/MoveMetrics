@@ -43,6 +43,22 @@ def run_dashboard():
     with lcol3:
         st.metric("Conversion Rate", f"{lead_funnel['Conversion Rate %']:.2f}%")
 
+    by_source = lead_funnel["by_source"]
+
+    gcol1, gcol2 = st.columns(2)
+
+    with gcol1:
+        st.caption("Leads vs Converted per sursa")
+        st.bar_chart(
+            by_source.set_index("Sursa")[["Leads", "Converted"]]
+        )
+
+    with gcol2:
+        st.caption("Conversion Rate per sursa")
+        st.bar_chart(
+            by_source.set_index("Sursa")["Conversion_Rate_%"]
+        )
+
     st.divider()
 
     st.subheader("Financial")
