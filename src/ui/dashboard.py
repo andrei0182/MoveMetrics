@@ -54,10 +54,10 @@ def run_dashboard():
 
     st.divider()
 
-    st.subheader("Joburi (deduplicate)")
-    st.dataframe(jobs_df, use_container_width=True)
+    #st.subheader("Joburi (deduplicate)")
+    #st.dataframe(jobs_df, use_container_width=True)
 
-    st.divider()
+
 
     st.subheader("Revenue by Provider")
     st.bar_chart(provider_df.set_index("Sursa")["Revenue"])
