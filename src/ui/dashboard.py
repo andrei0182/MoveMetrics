@@ -68,7 +68,7 @@ def run_dashboard():
         use_container_width=True,
         column_config={
             "Revenue": st.column_config.NumberColumn("Revenue", format="$%.2f"),
-            "Cost": st.column_config.NumberColumn("Cost", format="$%.2f"),
+            "Cost": st.column_config.NumberColumn("Lead Cost", format="$%.2f"),
             "Profit": st.column_config.NumberColumn("Profit", format="$%.2f"),
             "Average_Job": st.column_config.NumberColumn("Average Job", format="$%.2f"),
             "Margin_%": st.column_config.NumberColumn("Margin %", format="%.2f%%"),
