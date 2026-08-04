@@ -11,8 +11,6 @@ from src.monthly_report.excel_generator import generate_monthly_workbook
 from src.pipeline import run_pipeline
 
 
-st.set_page_config(page_title="Monthly Reports - MoveMetrics", layout="wide")
-
 st.title("Monthly Reports")
 st.caption(
     "Exports the current dataset as a multi-tab Excel workbook: one sheet "

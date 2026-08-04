@@ -63,8 +63,6 @@ def run_dashboard():
     the data comes from or how it's computed.
     """
 
-    st.set_page_config(page_title="MoveMetrics", layout="wide")
-
     st.title("MoveMetrics")
     st.subheader("Moving Company Analytics Suite")
 

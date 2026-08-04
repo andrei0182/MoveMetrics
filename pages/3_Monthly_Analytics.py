@@ -11,8 +11,6 @@ from src.analysis.trend_analysis import analyze_trends
 from src.pipeline import run_pipeline
 
 
-st.set_page_config(page_title="Monthly Analytics - MoveMetrics", layout="wide")
-
 st.title("Monthly Analytics")
 st.caption("Day-by-day trends over the reporting period.")
 

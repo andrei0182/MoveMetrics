@@ -20,8 +20,6 @@ from src.daily_report.reconciliation import reconcile
 from src.daily_report.sample_sources import generate_sample_sources
 
 
-st.set_page_config(page_title="Daily Report - MoveMetrics", layout="wide")
-
 st.title("Daily Report")
 st.caption(
     "Multi-source reconciliation: cross-check leads, payments, and calls "
