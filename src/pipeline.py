@@ -100,6 +100,7 @@ def run_pipeline():
         source_label = "synthetic demo data"
 
     return {
+        "raw_df": raw_df,
         "jobs_df": jobs_df,
         "financials": financials,
         "kpis": kpis,
