@@ -1,5 +1,5 @@
 """
-Punctul unic de orchestrare al pipeline-ului:
+Single orchestration entry point for the pipeline:
 
     Excel / Google Sheets
             |
@@ -21,15 +21,17 @@ Punctul unic de orchestrare al pipeline-ului:
             v
         Dashboard
 
-Regula: dashboard.py (ui/) NU apeleaza direct loaders/processing/analysis.
-Apeleaza doar functia run_pipeline() de aici si afiseaza rezultatul.
+Rule: dashboard.py (ui/) never calls loaders/processing/analysis directly.
+It calls run_pipeline() here and only renders the result.
 """
 
 import pandas as pd
 
 from config.settings import (
+    DEMO_FILE,
     REPORT_FILE,
-    CHARGED_SHEET,
+    USE_OWN_DATA,
+    LEADS_SHEET_NAME,
     GOOGLE_SHEET_ID,
     GOOGLE_SHEET_TAB,
 )
@@ -44,45 +46,58 @@ from src.models.kpi import calculate_kpis
 
 
 def load_raw_data():
-    """Stagiul LOADERS: Google Sheets daca e configurat, altfel fisier local."""
+    """
+    LOADERS stage. Priority:
+    1. Google Sheets, if GOOGLE_SHEET_ID is set
+    2. Your own local file, if USE_OWN_DATA is True
+    3. The bundled synthetic demo file (default - works with zero setup)
+    """
 
     if GOOGLE_SHEET_ID:
         return load_google_sheet(GOOGLE_SHEET_ID, sheet_name=GOOGLE_SHEET_TAB)
 
-    return load_excel(REPORT_FILE, CHARGED_SHEET)
+    if USE_OWN_DATA:
+        return load_excel(REPORT_FILE, LEADS_SHEET_NAME)
+
+    return load_excel(DEMO_FILE, LEADS_SHEET_NAME)
 
 
 def run_pipeline():
-    """
-    Ruleaza intregul pipeline si intoarce un dict cu tot ce are nevoie
-    dashboard-ul ca sa afiseze - fara nicio logica de business in ui/.
-    """
+    """Runs the full pipeline and returns everything the dashboard needs
+    to render - no business logic lives in ui/."""
 
     raw_df = load_raw_data()
 
-    # Stagiul CLEANING: un singur loc, o singura data.
+    # CLEANING stage: one place, once.
     jobs_df = build_clean_jobs_from_df(raw_df)
 
-    # Stagiul BUSINESS RULES: un singur loc, o singura data -
-    # analizele de mai jos primesc deja date curate, nu mai aplica reguli.
+    # BUSINESS RULES stage: one place, once - analyses below receive
+    # already-clean data and don't re-apply rules themselves.
     jobs_df = clean_provider_names(jobs_df)
 
-    # Stagiul FINANCIAL ANALYSIS + KPIs + provider breakdown + lead funnel.
+    # FINANCIAL ANALYSIS + KPIs + provider breakdown + lead funnel.
     financials = calculate_financials(jobs_df)
     kpis = calculate_kpis(jobs_df)
     provider_df = analyze_providers(jobs_df)
     lead_funnel = analyze_leads(jobs_df)
 
-    # Sincronizare vizuala: aceeasi ordine de profitabilitate (din
-    # provider_df, deja sortat dupa Profit descrescator) se aplica si
-    # peste tabelul by_source al lead_funnel, ca toate graficele/tabelele
-    # din dashboard sa arate sursele in aceeasi ordine, nu fiecare in alta.
-    profit_order = provider_df["Sursa"].tolist()
+    # Visual consistency: the same profitability order (from provider_df,
+    # already sorted by Profit descending) is applied to lead_funnel's
+    # by_source table too, so every chart/table in the dashboard shows
+    # sources in the same order instead of each picking its own.
+    profit_order = provider_df["Source"].tolist()
     by_source = lead_funnel["by_source"].copy()
-    by_source["Sursa"] = pd.Categorical(
-        by_source["Sursa"], categories=profit_order, ordered=True
+    by_source["Source"] = pd.Categorical(
+        by_source["Source"], categories=profit_order, ordered=True
     )
-    lead_funnel["by_source"] = by_source.sort_values("Sursa").reset_index(drop=True)
+    lead_funnel["by_source"] = by_source.sort_values("Source").reset_index(drop=True)
+
+    if GOOGLE_SHEET_ID:
+        source_label = "Google Sheets"
+    elif USE_OWN_DATA:
+        source_label = "your data (local file)"
+    else:
+        source_label = "synthetic demo data"
 
     return {
         "jobs_df": jobs_df,
@@ -91,5 +106,5 @@ def run_pipeline():
         "provider_df": provider_df,
         "lead_funnel": lead_funnel,
         "profit_order": profit_order,
-        "source": "Google Sheets" if GOOGLE_SHEET_ID else "fisier local",
+        "source": source_label,
     }

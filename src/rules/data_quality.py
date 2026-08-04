@@ -1,37 +1,31 @@
 import re
 
-from config.settings import VALID_JOB_PREFIXES
+from config.settings import VALID_ID_PREFIXES
 
 
-JOB_ID_PATTERN = re.compile(
-    r"^(" + "|".join(VALID_JOB_PREFIXES) + r")[A-Z0-9\-]+$"
-)
+JOB_ID_PATTERN = re.compile(r"^(" + "|".join(VALID_ID_PREFIXES) + r")[A-Z0-9\-]+$")
 
 
 def clean_provider_names(df):
     """
-    Marcheaza ca 'unknown' doar randurile unde Sursa contine de fapt
-    un Job # (semn ca datele au fost decalate cu o coloana in raportul
-    sursa), nu o lista hardcodata de joburi.
-
-    ATENTIE: lista veche hardcodata ["AL4170", "AL4470", "WB1031-DUP"]
-    a fost eliminata - verificare directa pe Report_JUL.xlsx a aratat ca
-    toate trei sunt joburi booked reale, cu Sursa reala (angieslist /
-    website) si bani incasati real. Lista bloca gresit revenue-ul lor.
+    Flags as 'unknown' only rows where Source actually contains what
+    looks like a Job ID (a sign that columns got shifted during data
+    entry/export), rather than relying on a hardcoded list of known-bad
+    rows - a hardcoded list silently breaks the moment new data comes in.
     """
 
     data = df.copy()
 
-    if "Sursa" not in data.columns:
+    if "Source" not in data.columns:
         return data
 
     looks_like_job_id = (
-        data["Sursa"]
+        data["Source"]
         .astype(str)
         .str.match(JOB_ID_PATTERN, na=False)
     )
 
-    data.loc[looks_like_job_id, "Sursa"] = "unknown"
+    data.loc[looks_like_job_id, "Source"] = "unknown"
 
     return data
 
@@ -41,21 +35,12 @@ def data_quality_report(df):
     report = {}
 
     report["Rows"] = len(df)
+    report["Missing Values"] = df.isna().sum().sum()
+    report["Duplicates"] = df.duplicated().sum()
 
-    report["Missing Values"] = (
-        df.isna()
-        .sum()
-        .sum()
-    )
-
-    report["Duplicates"] = (
-        df.duplicated()
-        .sum()
-    )
-
-    if "Sursa" in df.columns:
-        report["Suspicious Sursa (arata ca Job #)"] = (
-            df["Sursa"]
+    if "Source" in df.columns:
+        report["Suspicious Source (looks like a Job ID)"] = (
+            df["Source"]
             .astype(str)
             .str.match(JOB_ID_PATTERN, na=False)
             .sum()

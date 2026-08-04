@@ -1,10 +1,9 @@
 def calculate_financials(jobs_df):
     """
-    KPI financiare (Revenue/Cost/Profit/Margin) pe baza jobului deja
-    curat si deja trecut prin regulile de business (jobs_df vine din
-    pipeline.py, nu direct din Excel/Sheets).
-
-    Acest modul NU citeste Excel si NU curata date - doar agrega.
+    Revenue/Cost/Profit/Margin, computed on the already-clean, already
+    business-rules-applied job-level data (jobs_df comes from the
+    pipeline, not straight from Excel/Sheets - this module doesn't read
+    files and doesn't clean data.
     """
 
     revenue = jobs_df["Charged"].sum()

@@ -8,13 +8,14 @@ def _ordered_bar_chart(
     df, x_col, y_col, order, y_title=None, label_fmt=None, color_by_sign=False
 ):
     """
-    Grafic bar cu:
-    - ordine EXPLICITA pe axa X (dupa lista `order`) - st.bar_chart simplu
-      sorteaza alfabetic si ignora ordinea reala din DataFrame
-    - eticheta numerica afisata direct pe fiecare bara (label_fmt = functie
-      Python care formateaza valoarea, ex. lambda v: f"${v:,.0f}")
-    - optional, colorare verde/rosu dupa semn (folosit la Profit: verde
-      daca aduce profit, rosu daca aduce pierdere)
+    Bar chart with:
+    - EXPLICIT order on the x-axis (per `order`) - Streamlit's built-in
+      st.bar_chart sorts string categories alphabetically and ignores the
+      DataFrame's actual row order
+    - a numeric label rendered directly on each bar (label_fmt = a Python
+      function formatting the value, e.g. lambda v: f"${v:,.0f}")
+    - optional green/red coloring by sign (used for Profit: green when
+      a source is profitable, red when it's a net loss)
     """
 
     chart_df = df.copy()
@@ -46,32 +47,26 @@ def _ordered_bar_chart(
         )
 
     text = base.mark_text(
-        align="center",
-        baseline="bottom",
-        dy=-4,
-        fontSize=11,
+        align="center", baseline="bottom", dy=-4, fontSize=11,
     ).encode(
         y=alt.Y(f"{y_col}:Q"),
         text="_label:N",
     )
 
-    st.altair_chart(bars + text, use_container_width=True)
+    st.altair_chart(bars + text, width="stretch")
 
 
 def run_dashboard():
     """
-    Doar afisare. Toata logica (loaders, cleaning, rules, analysis, KPIs)
-    traieste in src/pipeline.py - acest modul nu stie si nu-i pasa de unde
-    vin datele sau cum sunt calculate.
+    Display only. All logic (loaders, cleaning, rules, analysis, KPIs)
+    lives in src/pipeline.py - this module doesn't know or care where
+    the data comes from or how it's computed.
     """
 
-    st.set_page_config(
-        page_title="PFM Analytics Suite",
-        layout="wide"
-    )
+    st.set_page_config(page_title="MoveMetrics", layout="wide")
 
-    st.title("PFM Analytics Suite")
-    st.subheader("Financial & Operational Dashboard")
+    st.title("MoveMetrics")
+    st.subheader("Moving Company Analytics Suite")
 
     try:
         result = run_pipeline()
@@ -79,7 +74,7 @@ def run_dashboard():
         st.error(str(e))
         return
 
-    st.caption(f"Sursa de date: {result['source']}")
+    st.caption(f"Data source: {result['source']} (synthetic - no real customer data)")
 
     kpis = result["kpis"]
     provider_df = result["provider_df"]
@@ -104,24 +99,24 @@ def run_dashboard():
     gcol1, gcol2 = st.columns(2)
 
     with gcol1:
-        st.caption("Conversion Rate per provider (%)")
+        st.caption("Conversion Rate by Source (%)")
         _ordered_bar_chart(
-            by_source, "Sursa", "Conversion_Rate_%", profit_order,
+            by_source, "Source", "Conversion_Rate_%", profit_order,
             y_title="Conversion Rate %",
             label_fmt=lambda v: f"{v:.1f}%",
         )
 
     with gcol2:
-        st.caption("Cost per Conversie per provider ($)")
+        st.caption("Cost per Conversion by Source ($)")
         cost_per_conversion = by_source[by_source["Cost_Per_Conversion"].notna()]
         if len(cost_per_conversion) > 0:
             _ordered_bar_chart(
-                cost_per_conversion, "Sursa", "Cost_Per_Conversion", profit_order,
-                y_title="Cost per Conversie ($)",
+                cost_per_conversion, "Source", "Cost_Per_Conversion", profit_order,
+                y_title="Cost per Conversion ($)",
                 label_fmt=lambda v: f"${v:,.0f}",
             )
         else:
-            st.info("Nicio sursa nu are conversii inca.")
+            st.info("No source has any conversions yet.")
 
     st.divider()
 
@@ -144,26 +139,23 @@ def run_dashboard():
         st.metric("Refunds", kpis["Refunds"])
 
     with col5:
-        st.metric(
-            "Pipeline necovertit",
-            f"${kpis['Pipeline necovertit (Deposit/Quote)']:,.2f}"
-        )
+        st.metric("Open Pipeline", f"${kpis['Open Pipeline (Deposit/Quote)']:,.2f}")
 
     st.divider()
 
-    st.subheader("Profit by Provider")
-    st.caption("Sortat de la cel mai profitabil la cel care aduce pierdere · verde = profit, rosu = pierdere")
+    st.subheader("Profit by Source")
+    st.caption("Sorted from most profitable to net loss · green = profit, red = loss")
     _ordered_bar_chart(
-        provider_df, "Sursa", "Profit", profit_order,
+        provider_df, "Source", "Profit", profit_order,
         y_title="Profit ($)",
         label_fmt=lambda v: f"${v:,.0f}",
         color_by_sign=True,
     )
 
-    st.subheader("Provider Performance")
+    st.subheader("Source Performance")
     st.dataframe(
         provider_df,
-        use_container_width=True,
+        width="stretch",
         column_config={
             "Revenue": st.column_config.NumberColumn("Revenue", format="$%.2f"),
             "Cost": st.column_config.NumberColumn("Lead Cost", format="$%.2f"),
@@ -177,11 +169,11 @@ def run_dashboard():
     st.subheader("Conversion by Source")
     st.dataframe(
         lead_funnel["by_source"],
-        use_container_width=True,
+        width="stretch",
         column_config={
             "Cost": st.column_config.NumberColumn("Lead Cost", format="$%.2f"),
             "Cost_Per_Conversion": st.column_config.NumberColumn(
-                "Cost per Conversie", format="$%.2f"
+                "Cost per Conversion", format="$%.2f"
             ),
             "Conversion_Rate_%": st.column_config.NumberColumn(
                 "Conversion Rate", format="%.2f%%"

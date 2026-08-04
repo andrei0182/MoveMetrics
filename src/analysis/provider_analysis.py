@@ -3,10 +3,10 @@ from src.utils.money import clean_money_series
 
 def analyze_providers(jobs_df):
     """
-    Revenue/Cost/Profit pe sursa/provider. Presupune jobs_df deja curat si
-    deja trecut prin regulile de business (src/rules/data_quality.py aplicat
-    in pipeline.py) - acest modul NU mai apeleaza clean_provider_names
-    intern, ca sa nu existe doua locuri care aplica aceeasi regula.
+    Revenue/Cost/Profit per lead source. Assumes jobs_df is already clean
+    and already passed through the business rules (src/rules/data_quality.py,
+    applied once in pipeline.py) - this module does not re-apply rules,
+    so there's a single place that decides what counts as a valid source.
     """
 
     data = jobs_df.copy()
@@ -20,7 +20,7 @@ def analyze_providers(jobs_df):
 
     provider = (
         data
-        .groupby("Sursa")
+        .groupby("Source")
         .agg(
             Jobs=("Job #", "nunique"),
             Revenue=("Charged", "sum"),

@@ -3,17 +3,17 @@ from src.utils.money import clean_money_series
 
 def analyze_leads(jobs_df):
     """
-    Analiza funnel-ului de leaduri, pe baza jobs_df (deja deduplicat pe
-    Job #, cu ultimul status si Charged/Cost insumate pe fiecare lead).
+    Lead funnel analysis, on top of jobs_df (already deduplicated by
+    Job #, with the last known status and total Charged/Cost per lead).
 
-    Distinctie importanta: jobs_df contine TOATE leadurile unice, indiferent
-    de status (voicemail, cancelled, booked...) - nu doar cele convertite.
-    "Converted" = leadurile care au adus bani reali (Charged > 0).
+    Important distinction: jobs_df contains ALL unique leads, regardless
+    of status (voicemail, cancelled, booked...), not just the converted
+    ones. "Converted" = leads that generated real revenue (Charged > 0).
 
-    Cost_Per_Conversion = cat a costat, in medie, sa obtii UN job convertit
-    de la o sursa (Cost total al sursei / numar de conversii). Daca o sursa
-    are 0 conversii, e "fara conversii" (nu 0$ sau infinit) - se afiseaza
-    separat, ca sa nu induca in eroare un cost per conversie de 0.
+    Cost_Per_Conversion = average cost to acquire ONE converted job from
+    a given source (that source's total Cost / number of conversions).
+    Left as None when a source has zero conversions, instead of 0 or
+    infinity, so it doesn't misleadingly read as "free."
     """
 
     data = jobs_df.copy()
@@ -33,16 +33,12 @@ def analyze_leads(jobs_df):
     if total_leads > 0:
         conversion_rate = total_converted / total_leads * 100
 
-    by_status = (
-        data["Status"]
-        .value_counts()
-        .reset_index()
-    )
+    by_status = data["Status"].value_counts().reset_index()
     by_status.columns = ["Status", "Leads"]
 
     by_source = (
         data
-        .groupby("Sursa")
+        .groupby("Source")
         .agg(
             Leads=("Job #", "nunique"),
             Cost=("Cost", "sum"),
@@ -52,12 +48,12 @@ def analyze_leads(jobs_df):
 
     converted_by_source = (
         converted_df
-        .groupby("Sursa")["Job #"]
+        .groupby("Source")["Job #"]
         .nunique()
         .reset_index(name="Converted")
     )
 
-    by_source = by_source.merge(converted_by_source, on="Sursa", how="left")
+    by_source = by_source.merge(converted_by_source, on="Source", how="left")
     by_source["Converted"] = by_source["Converted"].fillna(0).astype(int)
 
     by_source["Conversion_Rate_%"] = 0.0
@@ -68,8 +64,6 @@ def analyze_leads(jobs_df):
         * 100
     )
 
-    # Cost per conversie: doar acolo unde exista cel putin o conversie -
-    # altfel ar aparea fals ca "0$ per conversie" pentru surse fara conversii.
     by_source["Cost_Per_Conversion"] = None
     converted_mask_source = by_source["Converted"] > 0
     by_source.loc[converted_mask_source, "Cost_Per_Conversion"] = (

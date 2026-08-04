@@ -4,8 +4,6 @@ from src.models.kpi import calculate_kpis
 
 
 def test_average_job_value_is_per_job_not_per_row():
-    # Daca s-ar calcula .mean() pe randuri brute (bug vechi),
-    # rezultatul ar fi diferit de Total Charged / Total Jobs.
     jobs_df = pd.DataFrame({
         "Job #": ["A", "B", "C"],
         "Charged": [1000, 500, 0],

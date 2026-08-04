@@ -6,28 +6,35 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 RAW_DATA = BASE_DIR / "data" / "raw"
 PROCESSED_DATA = BASE_DIR / "data" / "processed"
 REPORTS_DATA = BASE_DIR / "data" / "reports"
+DEMO_DATA = BASE_DIR / "data" / "demo"
 
-# Fisierul zilnic consolidat. Un singur nume, neutru la luna -
-# indiferent daca sursa se numeste Report_JUL.xlsx, Repot_AUG (3).xlsx etc.,
-# scripts/set_report.py il copiaza mereu aici, cu acelasi nume fix.
-# Asa nu mai trebuie schimbat nimic in cod cand se schimba luna.
-REPORT_FILE = RAW_DATA / "Report.xlsx"
+# Portfolio demo: ships with a bundled synthetic dataset so the app runs
+# out of the box, with zero setup, on anyone's machine.
+DEMO_FILE = DEMO_DATA / "sample_leads.xlsx"
+
+# For a real deployment, point REPORT_FILE at your own daily-report export.
+# The filename is deliberately month-agnostic - update the file in place
+# (or via a small "set_report.py"-style script) rather than the filename,
+# so nothing in the code has to change when the reporting period changes.
+REPORT_FILE = RAW_DATA / "report_current.xlsx"
 
 PROCESSED_FILE = PROCESSED_DATA / "processed_jobs.xlsx"
 
-# --- Sursa de date: Google Sheets (optional) ---
-# Daca GOOGLE_SHEET_ID e completat, dashboard-ul citeste direct din Google
-# Sheets (tab-ul GOOGLE_SHEET_TAB) in loc de fisierul local REPORT_FILE.
-# ID-ul e partea din URL: https://docs.google.com/spreadsheets/d/<AICI>/edit
-# Sheet-ul trebuie partajat "Anyone with the link - Viewer".
-GOOGLE_SHEET_ID = "1smQg1rKIB38cJUGgvvJnqb7E_c-HXaqT--5qzFjQWrk"
-GOOGLE_SHEET_TAB = "CHARGED"
+# Set to True to use REPORT_FILE (your own data) instead of the bundled demo.
+USE_OWN_DATA = False
 
-# Numele exact al sheet-ului consolidat din raportul zilnic local (.xlsx).
-# Verificat direct pe fisierul din Drive: sheet-ul se numeste "CHARGED",
-# FARA spatiu la final (unele module aveau "CHARGED " cu spatiu -> cautare esuata).
-CHARGED_SHEET = "CHARGED"
+# Name of the consolidated sheet/tab that holds one row per lead event.
+LEADS_SHEET_NAME = "LEADS"
 
-# Prefixe valide de Job # in sistem (folosite pentru validarea coloanei Sursa
-# si pentru identificarea randurilor cu date decalate pe coloane).
-VALID_JOB_PREFIXES = ("AL", "HA", "WB", "MN", "QU", "GH", "CF", "GE", "MY", "AF")
+# --- Data source: Google Sheets (optional) ---
+# If GOOGLE_SHEET_ID is set, the app reads live from Google Sheets (tab
+# GOOGLE_SHEET_TAB) instead of a local file. Off by default for the demo -
+# the bundled sample file is simpler and needs no external dependency.
+# Sheet must be shared as "Anyone with the link - Viewer".
+GOOGLE_SHEET_ID = None
+GOOGLE_SHEET_TAB = LEADS_SHEET_NAME
+
+# Valid Job ID prefixes for this dataset - used by the data-quality rules
+# to detect rows where columns got shifted (e.g. a Job ID ends up in the
+# Source column instead of a real channel name).
+VALID_ID_PREFIXES = ("GA", "FB", "RF", "WB", "YP", "DM")

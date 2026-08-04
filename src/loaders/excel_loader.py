@@ -10,9 +10,10 @@ def get_sheets(file_path):
 
 def _resolve_sheet_name(file_path, sheet_name):
     """
-    Gaseste numele exact al sheet-ului, tolerand diferente de spatii/majuscule.
-    Motiv: sheet-ul "CHARGED" din Report_JUL.xlsx a fost cautat in unele
-    module ca "CHARGED " (cu spatiu) -> cautare exacta esua silentios.
+    Resolves the exact sheet name, tolerating trailing spaces / case
+    differences (a common source of silent "sheet not found" failures
+    when the expected name is hardcoded slightly differently in a
+    couple of places).
     """
 
     available = get_sheets(file_path)
@@ -27,18 +28,15 @@ def _resolve_sheet_name(file_path, sheet_name):
         return normalized[target]
 
     raise ValueError(
-        f"Sheet '{sheet_name}' nu a fost gasit. Sheet-uri disponibile: {available}"
+        f"Sheet '{sheet_name}' not found. Available sheets: {available}"
     )
 
 
-def load_excel(
-    file_path,
-    sheet_name
-):
+def load_excel(file_path, sheet_name):
 
     resolved_sheet = _resolve_sheet_name(file_path, sheet_name)
 
-    # citim fara header
+    # first pass without header, to locate the real header row
     raw = pd.read_excel(
         file_path,
         sheet_name=resolved_sheet,
@@ -46,23 +44,17 @@ def load_excel(
         engine="openpyxl"
     )
 
-    # cautam randul care contine "Job #"
     header_row = None
 
     for index, row in raw.iterrows():
-
         values = row.astype(str).tolist()
-
         if "Job #" in values:
             header_row = index
             break
 
     if header_row is None:
-        raise ValueError(
-            "Nu am gasit header-ul Excel"
-        )
+        raise ValueError("Could not locate the header row (expected a 'Job #' column)")
 
-    # recitim cu header corect
     df = pd.read_excel(
         file_path,
         sheet_name=resolved_sheet,
@@ -70,13 +62,8 @@ def load_excel(
         engine="openpyxl"
     )
 
-    # eliminam coloane goale
-    df = df.dropna(
-        axis=1,
-        how="all"
-    )
+    df = df.dropna(axis=1, how="all")
 
-    # curatam nume coloane
     df.columns = (
         df.columns
         .astype(str)
