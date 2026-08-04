@@ -5,7 +5,7 @@ tracks the full funnel from lead source, through conversion, to profit —
 so you know exactly which marketing channels are actually making money,
 not just generating volume.
 
-**[Live demo →](#)** *(update with your Streamlit Cloud URL after deploying)*
+**[Live demo →](https://andrei0182-pfm-analytics-suite-app-uc0g8b.streamlit.app/)**
 
 > Runs entirely on a bundled **synthetic** dataset — no real customer data,
 > no setup required. Clone it and it just works.
