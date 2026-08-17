@@ -7,6 +7,8 @@ not just generating volume.
 
 **[Live demo →](https://andrei0182-pfm-analytics-suite-app-uc0g8b.streamlit.app/)**
 
+![MoveMetrics dashboard — lead pipeline, conversion rate and cost per conversion by source](assets/dashboard.png)
+
 > Runs entirely on a bundled **synthetic** dataset — no real customer data,
 > no setup required. Clone it and it just works.
 
